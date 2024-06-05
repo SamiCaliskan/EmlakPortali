@@ -1,0 +1,31 @@
+﻿@model IEnumerable<EmlakPortali.DTO.AdvertDTO>
+
+<h2>Adverts</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var advert in Model)
+        {
+            <tr>
+                <td>@advert.AdvertId</td>
+                <td>@advert.AdvertTitle</td>
+                <td>@advert.Date</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@advert.AdvertId">Details</a> |
+                    <a asp-action="Edit" asp-route-id="@advert.AdvertId">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@advert.AdvertId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Create">Create New Advert</a>

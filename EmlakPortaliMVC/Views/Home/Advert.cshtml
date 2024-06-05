@@ -1,0 +1,124 @@
+﻿<div class="row">
+    <div class="col-md-8" id="divListAdvert">
+        <h4>Advert List</h4>
+
+        <table class="table" id="tbAdvertList">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Registration Date</th>
+                    <th>Update Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-4" id="divAddUpdateAdvert">
+        <h4 id="editHeaderAdvert">Add Advert</h4>
+
+        <div class="b-2">
+            <label>Advert Name</label>
+            <input type="text" class="form-control" id="txtAdvertName" />
+            <input type="hidden" id="txtAdvertId" />
+        </div>
+        <div class="b-2">
+            <input type="checkbox" class="form-check-inline" id="cbAdvertIsActive" />
+            <label>Active</label>
+        </div>
+        <div class="mb-2">
+            <button class="btn btn-outline-primary btn-sm" id="btnSaveAdvert">Save</button>
+            <button class="btn btn-outline-secondary btn-sm" id="btnCancelAdvert">Cancel</button>
+        </div>
+
+        <div id="resultAdvert"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var ApiBaseUrl = "@ViewBag.ApiBaseUrl";
+            var token = localStorage.getItem("token");
+            if (token == "" || token == null) {
+                location.href = "/Advert";
+                return false;
+            }
+
+            // Advert Listesini Getir
+            function getAdvertList() {
+                $.ajax({
+                    url: ApiBaseUrl + "Advert",
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        showAdvertList(data);
+                    },
+                    error: function (e) {
+                        if (e.status == 401) {
+                            localStorage.removeItem("token");
+                            location.href = "/Advert";
+                        }
+                    }
+                });
+            }
+
+            // Advert Listesi Tablosunu Oluştur
+            function showAdvertList(data) {
+                var tbody = $("#tbAdvertList tbody");
+                tbody.empty();
+                data.forEach(function (item) {
+                    var isActive = item.isActive ? 'Active' : 'Inactive';
+                    var row = `<tr>
+                                        <td>${item.id}</td>
+                                        <td>${item.name}</td>
+                                        <td>${isActive}</td>
+                                        <td>${item.registrationDate}</td>
+                                        <td>${item.updateDate}</td>
+                                        <td><button class="btn btn-outline-primary btn-sm editAdvert" data-id="${item.id}">Edit</button></td>
+                                      </tr>`;
+                    tbody.append(row);
+                });
+            }
+
+            // Sayfa Yüklendiğinde Advert Listesini Getir
+            getAdvertList();
+
+            // Yeni Advert Ekleme
+            $("#btnSaveAdvert").click(function () {
+                var name = $("#txtAdvertName").val();
+                var isActive = $("#cbAdvertIsActive").is(":checked");
+                var advertItem = {
+                    Name: name,
+                    IsActive: isActive
+                };
+
+                $.ajax({
+                    url: ApiBaseUrl + "Advert",
+                    method: "POST",
+                    data: JSON.stringify(advertItem),
+                    contentType: "application/json",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        $("#resultAdvert").show().removeClass().addClass(data.status ? "alert alert-success" : "alert alert-danger").html(data.message).fadeOut(3000);
+                        getAdvertList();
+                    },
+                    error: function (e) {
+                        if (e.status == 401) {
+                            localStorage.removeItem("token");
+                            location.href = "/Advert";
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

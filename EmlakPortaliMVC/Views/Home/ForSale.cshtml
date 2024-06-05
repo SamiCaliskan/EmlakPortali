@@ -1,0 +1,124 @@
+﻿<div class="row">
+    <div class="col-md-8" id="divListForSale">
+        <h4>For Sale List</h4>
+
+        <table class="table" id="tbForSaleList">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Registration Date</th>
+                    <th>Update Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-4" id="divAddUpdateForSale">
+        <h4 id="editHeaderForSale">Add For Sale</h4>
+
+        <div class="b-2">
+            <label>For Sale Name</label>
+            <input type="text" class="form-control" id="txtForSaleName" />
+            <input type="hidden" id="txtForSaleId" />
+        </div>
+        <div class="b-2">
+            <input type="checkbox" class="form-check-inline" id="cbForSaleIsActive" />
+            <label>Active</label>
+        </div>
+        <div class="mb-2">
+            <button class="btn btn-outline-primary btn-sm" id="btnSaveForSale">Save</button>
+            <button class="btn btn-outline-secondary btn-sm" id="btnCancelForSale">Cancel</button>
+        </div>
+
+        <div id="resultForSale"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var ApiBaseUrl = "@ViewBag.ApiBaseUrl";
+            var token = localStorage.getItem("token");
+            if (token == "" || token == null) {
+                location.href = "/ForSale";
+                return false;
+            }
+
+            // For Sale Listesini Getir
+            function getForSaleList() {
+                $.ajax({
+                    url: ApiBaseUrl + "ForSale",
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        showForSaleList(data);
+                    },
+                    error: function (e) {
+                        if (e.status == 401) {
+                            localStorage.removeItem("token");
+                            location.href = "/ForSale";
+                        }
+                    }
+                });
+            }
+
+            // For Sale Listesi Tablosunu Oluştur
+            function showForSaleList(data) {
+                var tbody = $("#tbForSaleList tbody");
+                tbody.empty();
+                data.forEach(function (item) {
+                    var isActive = item.isActive ? 'Active' : 'Inactive';
+                    var row = `<tr>
+                                        <td>${item.id}</td>
+                                        <td>${item.name}</td>
+                                        <td>${isActive}</td>
+                                        <td>${item.registrationDate}</td>
+                                        <td>${item.updateDate}</td>
+                                        <td><button class="btn btn-outline-primary btn-sm editForSale" data-id="${item.id}">Edit</button></td>
+                                      </tr>`;
+                    tbody.append(row);
+                });
+            }
+
+            // Sayfa Yüklendiğinde For Sale Listesini Getir
+            getForSaleList();
+
+            // Yeni For Sale Ekleme
+            $("#btnSaveForSale").click(function () {
+                var name = $("#txtForSaleName").val();
+                var isActive = $("#cbForSaleIsActive").is(":checked");
+                var forSaleItem = {
+                    Name: name,
+                    IsActive: isActive
+                };
+
+                $.ajax({
+                    url: ApiBaseUrl + "ForSale",
+                    method: "POST",
+                    data: JSON.stringify(forSaleItem),
+                    contentType: "application/json",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        $("#resultForSale").show().removeClass().addClass(data.status ? "alert alert-success" : "alert alert-danger").html(data.message).fadeOut(3000);
+                        getForSaleList();
+                    },
+                    error: function (e) {
+                        if (e.status == 401) {
+                            localStorage.removeItem("token");
+                            location.href = "/ForSale";
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

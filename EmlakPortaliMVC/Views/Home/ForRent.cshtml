@@ -1,0 +1,124 @@
+﻿<div class="row">
+    <div class="col-md-8" id="divListForRent">
+        <h4>For Rent List</h4>
+
+        <table class="table" id="tbForRentList">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Registration Date</th>
+                    <th>Update Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-4" id="divAddUpdateForRent">
+        <h4 id="editHeaderForRent">Add For Rent</h4>
+
+        <div class="b-2">
+            <label>For Rent Name</label>
+            <input type="text" class="form-control" id="txtForRentName" />
+            <input type="hidden" id="txtForRentId" />
+        </div>
+        <div class="b-2">
+            <input type="checkbox" class="form-check-inline" id="cbForRentIsActive" />
+            <label>Active</label>
+        </div>
+        <div class="mb-2">
+            <button class="btn btn-outline-primary btn-sm" id="btnSaveForRent">Save</button>
+            <button class="btn btn-outline-secondary btn-sm" id="btnCancelForRent">Cancel</button>
+        </div>
+
+        <div id="resultForRent"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var ApiBaseUrl = "@ViewBag.ApiBaseUrl";
+            var token = localStorage.getItem("token");
+            if (token == "" || token == null) {
+                location.href = "/ForRent";
+                return false;
+            }
+
+            // For Rent Listesini Getir
+            function getForRentList() {
+                $.ajax({
+                    url: ApiBaseUrl + "ForRent",
+                    method: "GET",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        showForRentList(data);
+                    },
+                    error: function (e) {
+                        if (e.status == 401) {
+                            localStorage.removeItem("token");
+                            location.href = "/ForRent";
+                        }
+                    }
+                });
+            }
+
+            // For Rent Listesi Tablosunu Oluştur
+            function showForRentList(data) {
+                var tbody = $("#tbForRentList tbody");
+                tbody.empty();
+                data.forEach(function (item) {
+                    var isActive = item.isActive ? 'Active' : 'Inactive';
+                    var row = `<tr>
+                                        <td>${item.id}</td>
+                                        <td>${item.name}</td>
+                                        <td>${isActive}</td>
+                                        <td>${item.registrationDate}</td>
+                                        <td>${item.updateDate}</td>
+                                        <td><button class="btn btn-outline-primary btn-sm editForRent" data-id="${item.id}">Edit</button></td>
+                                      </tr>`;
+                    tbody.append(row);
+                });
+            }
+
+            // Sayfa Yüklendiğinde For Rent Listesini Getir
+            getForRentList();
+
+            // Yeni For Rent Ekleme
+            $("#btnSaveForRent").click(function () {
+                var name = $("#txtForRentName").val();
+                var isActive = $("#cbForRentIsActive").is(":checked");
+                var forRentItem = {
+                    Name: name,
+                    IsActive: isActive
+                };
+
+                $.ajax({
+                    url: ApiBaseUrl + "ForRent",
+                    method: "POST",
+                    data: JSON.stringify(forRentItem),
+                    contentType: "application/json",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    success: function (data) {
+                        $("#resultForRent").show().removeClass().addClass(data.status ? "alert alert-success" : "alert alert-danger").html(data.message).fadeOut(3000);
+                        getForRentList();
+                    },
+                    error: function (e) {
+                        if (e.status == 401) {
+                            localStorage.removeItem("token");
+                            location.href = "/ForRent";
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}
